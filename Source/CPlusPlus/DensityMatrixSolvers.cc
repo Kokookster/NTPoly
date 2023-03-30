@@ -11,53 +11,53 @@ extern "C" {
 namespace NTPoly {
 ////////////////////////////////////////////////////////////////////////////////
 void DensityMatrixSolvers::PM(const Matrix_ps &Hamiltonian,
-                              const Matrix_ps &Overlap, double trace,
+                              const Matrix_ps &Overlap, int nel,
                               Matrix_ps &Density, double &energy_value_out,
                               double &chemical_potential_out,
                               const SolverParameters &solver_parameters) {
-  PM_wrp(GetIH(Hamiltonian), GetIH(Overlap), &trace, GetIH(Density),
+  PM_wrp(GetIH(Hamiltonian), GetIH(Overlap), &nel, GetIH(Density),
          &energy_value_out, &chemical_potential_out, GetIH(solver_parameters));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 void DensityMatrixSolvers::TRS2(const Matrix_ps &Hamiltonian,
-                                const Matrix_ps &Overlap, double trace,
+                                const Matrix_ps &Overlap, int nel,
                                 Matrix_ps &Density, double &energy_value_out,
                                 double &chemical_potential_out,
                                 const SolverParameters &solver_parameters) {
-  TRS2_wrp(GetIH(Hamiltonian), GetIH(Overlap), &trace, GetIH(Density),
+  TRS2_wrp(GetIH(Hamiltonian), GetIH(Overlap), &nel, GetIH(Density),
            &energy_value_out, &chemical_potential_out,
            GetIH(solver_parameters));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 void DensityMatrixSolvers::TRS4(const Matrix_ps &Hamiltonian,
-                                const Matrix_ps &Overlap, double trace,
+                                const Matrix_ps &Overlap, int nel,
                                 Matrix_ps &Density, double &energy_value_out,
                                 double &chemical_potential_out,
                                 const SolverParameters &solver_parameters) {
-  TRS4_wrp(GetIH(Hamiltonian), GetIH(Overlap), &trace, GetIH(Density),
+  TRS4_wrp(GetIH(Hamiltonian), GetIH(Overlap), &nel, GetIH(Density),
            &energy_value_out, &chemical_potential_out,
            GetIH(solver_parameters));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 void DensityMatrixSolvers::HPCP(const Matrix_ps &Hamiltonian,
-                                const Matrix_ps &Overlap, double trace,
+                                const Matrix_ps &Overlap, int nel,
                                 Matrix_ps &Density, double &energy_value_out,
                                 double &chemical_potential_out,
                                 const SolverParameters &solver_parameters) {
-  HPCP_wrp(GetIH(Hamiltonian), GetIH(Overlap), &trace, GetIH(Density),
+  HPCP_wrp(GetIH(Hamiltonian), GetIH(Overlap), &nel, GetIH(Density),
            &energy_value_out, &chemical_potential_out,
            GetIH(solver_parameters));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 void DensityMatrixSolvers::ScaleAndFold(
-    const Matrix_ps &Hamiltonian, const Matrix_ps &Overlap, double trace,
+    const Matrix_ps &Hamiltonian, const Matrix_ps &Overlap, int nel,
     Matrix_ps &Density, double homo, double lumo, double &energy_value_out,
     const SolverParameters &solver_parameters) {
-  ScaleAndFold_wrp(GetIH(Hamiltonian), GetIH(Overlap), &trace, GetIH(Density),
+  ScaleAndFold_wrp(GetIH(Hamiltonian), GetIH(Overlap), &nel, GetIH(Density),
                    &homo, &lumo, &energy_value_out, GetIH(solver_parameters));
 }
 

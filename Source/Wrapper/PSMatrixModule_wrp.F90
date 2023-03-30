@@ -40,7 +40,6 @@ MODULE PSMatrixModule_wrp
   PUBLIC :: ConjugateMatrix_ps_wrp
   PUBLIC :: ResizeMatrix_ps_wrp
   PUBLIC :: GetMatrixProcessGrid_ps_wrp
-  PUBLIC :: IsIdentity_ps_wrp
 CONTAINS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   !> Wrap the constructor of an empty sparse, distributed, matrix.
   SUBROUTINE ConstructEmptyMatrix_ps_wrp(ih_this,matrix_dim) &
@@ -409,7 +408,7 @@ CONTAINS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     INTEGER(KIND=c_int), INTENT(INOUT) :: ih_matA(SIZE_wrp)
     TYPE(Matrix_ps_wrp) :: h_matA
 
-    h_matA = TRANSFER(ih_matA,h_matA)
+    h_matA  = TRANSFER(ih_matA,h_matA)
     CALL ConjugateMatrix(h_matA%DATA)
   END SUBROUTINE ConjugateMatrix_ps_wrp
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -420,7 +419,7 @@ CONTAINS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     INTEGER(KIND=c_int), INTENT(IN) :: new_size
     TYPE(Matrix_ps_wrp) :: h_this
 
-    h_this = TRANSFER(ih_this,h_this)
+    h_this  = TRANSFER(ih_this,h_this)
     CALL ResizeMatrix(h_this%DATA, new_size)
   END SUBROUTINE ResizeMatrix_ps_wrp
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -436,16 +435,5 @@ CONTAINS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     h_grid%DATA => h_this%DATA%process_grid
     ih_grid = TRANSFER(h_grid, ih_grid)
   END SUBROUTINE GetMatrixProcessGrid_ps_wrp
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  !> Check if a matrix is the identity matrix.
-  FUNCTION IsIdentity_ps_wrp(ih_this) &
-       & BIND(c,NAME="IsIdentity_ps_wrp") RESULT(is_identity)
-    INTEGER(KIND=c_int), INTENT(IN) :: ih_this(SIZE_wrp)
-    LOGICAL(KIND=c_bool) :: is_identity
-    TYPE(Matrix_ps_wrp) :: h_this
-
-    h_this = TRANSFER(ih_this,h_this)
-    is_identity = IsIdentity(h_this%DATA)
-  END FUNCTION IsIdentity_ps_wrp
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 END MODULE PSMatrixModule_wrp

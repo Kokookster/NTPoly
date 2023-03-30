@@ -19,7 +19,6 @@ bool GetGlobalIsRoot_wrp();
 int GetGlobalNumSlices_wrp();
 int GetGlobalNumColumns_wrp();
 int GetGlobalNumRows_wrp();
-void WriteGlobalProcessGridInfo_wrp();
 void DestructGlobalProcessGrid_wrp();
 
 void ConstructProcessGrid_wrp(int *ih_grid, const int *world_comm,
@@ -35,7 +34,6 @@ int GetMyRow_wrp(const int *ih_grid);
 int GetNumSlices_wrp(const int *ih_grid);
 int GetNumColumns_wrp(const int *ih_grid);
 int GetNumRows_wrp(const int *ih_grid);
-void WriteProcessGridInfo_wrp(const int *ih_grid);
 void DestructProcessGrid_wrp(int *ih_grid);
 
 #endif

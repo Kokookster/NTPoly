@@ -8,7 +8,7 @@ PROGRAM PremadeMatrixProgram
   USE PermutationModule, ONLY : Permutation_t, ConstructRandomPermutation, &
        & DestructPermutation
   USE ProcessGridModule, ONLY : ConstructProcessGrid, IsRoot, &
-       & DestructProcessGrid, WriteProcessGridInfo
+       & DestructProcessGrid
   USE PSMatrixModule, ONLY : Matrix_ps, ConstructMatrixFromMatrixMarket, &
        & WriteMatrixToMatrixMarket, DestructMatrix
   USE SolverParametersModule, ONLY : SolverParameters_t
@@ -22,7 +22,7 @@ PROGRAM PremadeMatrixProgram
   INTEGER :: process_rows, process_columns, process_slices
   REAL(NTREAL) :: threshold
   REAL(NTREAL) :: converge_overlap, converge_density
-  REAL(NTREAL) :: number_of_electrons
+  INTEGER :: number_of_electrons
   TYPE(SolverParameters_t) :: solver_parameters
   TYPE(Permutation_t) :: permutation
   !! Matrices
@@ -90,7 +90,6 @@ PROGRAM PremadeMatrixProgram
   CALL WriteElement(key="converge_overlap", VALUE=converge_overlap)
   CALL WriteElement(key="converge_density", VALUE=converge_density)
   CALL ExitSubLog
-  CALL WriteProcessGridInfo
 
   !! Read in the matrices from file.
   CALL ConstructMatrixFromMatrixMarket(Hamiltonian,hamiltonian_file)

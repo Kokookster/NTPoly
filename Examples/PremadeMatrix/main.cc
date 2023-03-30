@@ -23,7 +23,7 @@ int main(int argc, char *argv[]) {
   int process_rows, process_columns, process_slices;
   double threshold;
   double converge_overlap, converge_density;
-  double number_of_electrons;
+  int number_of_electrons;
 
   // Setup MPI
   int provided;
@@ -65,7 +65,6 @@ int main(int argc, char *argv[]) {
   if (NTPoly::GetGlobalIsRoot()) {
     NTPoly::ActivateLogger();
   }
-  NTPoly::WriteGridInfo();
 
   // Read in the matrices from file.
   NTPoly::Matrix_ps Hamiltonian(hamiltonian_file);

@@ -28,7 +28,7 @@ if __name__ == "__main__":
         elif argument == '--process_slices':
             process_slices = int(argument_value)
         elif argument == '--number_of_electrons':
-            number_of_electrons = float(argument_value)
+            number_of_electrons = int(argument_value)
         elif argument == '--threshold':
             threshold = float(argument_value)
         elif argument == '--converge_overlap':
@@ -41,7 +41,6 @@ if __name__ == "__main__":
         process_rows, process_columns, process_slices)
     if nt.GetGlobalIsRoot():
         nt.ActivateLogger()
-    nt.WriteGridInfo()
 
     # Read in the matrices from file.
     Hamiltonian = nt.Matrix_ps(hamiltonian_file)

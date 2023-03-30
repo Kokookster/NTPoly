@@ -3,16 +3,16 @@
 MODULE PSMatrixAlgebraModule
   USE DataTypesModule, ONLY : NTREAL, MPINTREAL, NTCOMPLEX, MPINTCOMPLEX
   USE GemmTasksModule
+  USE PMatrixMemoryPoolModule, ONLY : MatrixMemoryPool_p, &
+       & CheckMemoryPoolValidity, DestructMatrixMemoryPool
+  USE PSMatrixModule, ONLY : Matrix_ps, ConstructEmptyMatrix, CopyMatrix, &
+       & DestructMatrix, ConvertMatrixToComplex, ConjugateMatrix, &
+       & MergeMatrixLocalBlocks
   USE MatrixReduceModule, ONLY : ReduceHelper_t, ReduceAndComposeMatrixSizes, &
        & ReduceAndComposeMatrixData, ReduceAndComposeMatrixCleanup, &
        & ReduceANdSumMatrixSizes, ReduceAndSumMatrixData, &
        & ReduceAndSumMatrixCleanup, TestReduceSizeRequest, &
        & TestReduceInnerRequest, TestReduceDataRequest
-  USE PMatrixMemoryPoolModule, ONLY : MatrixMemoryPool_p, &
-       & CheckMemoryPoolValidity, DestructMatrixMemoryPool
-  USE PSMatrixModule, ONLY : Matrix_ps, ConstructEmptyMatrix, CopyMatrix, &
-       & DestructMatrix, ConvertMatrixToComplex, ConjugateMatrix, &
-       & MergeMatrixLocalBlocks, IsIdentity
   USE SMatrixAlgebraModule, ONLY : MatrixMultiply, MatrixGrandSum, &
        & PairwiseMultiplyMatrix, IncrementMatrix, ScaleMatrix, &
        & MatrixColumnNorm
@@ -33,7 +33,6 @@ MODULE PSMatrixAlgebraModule
   PUBLIC :: IncrementMatrix
   PUBLIC :: ScaleMatrix
   PUBLIC :: MatrixTrace
-  PUBLIC :: SimilarityTransform
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   INTERFACE MatrixSigma
      MODULE PROCEDURE MatrixSigma_ps
@@ -557,61 +556,5 @@ CONTAINS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 #undef TLIST
     END IF
   END SUBROUTINE MatrixTrace_psr
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  !> Transform a matrix B = P * A * P^-1
-  !! This routine will check if P is the identity matrix, and if so
-  !! just return A.
-  SUBROUTINE SimilarityTransform(A, P, PInv, ResMat, pool_in, threshold_in)
-    !> The matrix to transform
-    TYPE(Matrix_ps), INTENT(IN) :: A
-    !> The left matrix.
-    TYPE(Matrix_ps), INTENT(IN) :: P
-    !> The right matrix.
-    TYPE(Matrix_ps), INTENT(IN) :: PInv
-    !> The computed matrix P * A * P^-1
-    TYPE(Matrix_ps), INTENT(INOUT) :: ResMat
-    !> A matrix memory pool.
-    TYPE(MatrixMemoryPool_p), INTENT(INOUT), OPTIONAL :: pool_in
-    !> The threshold for removing small elements.
-    REAL(NTREAL), INTENT(IN), OPTIONAL :: threshold_in
-    !! Local variables
-    TYPE(MatrixMemoryPool_p) :: pool
-    TYPE(Matrix_ps) :: TempMat
-    REAL(NTREAL) :: threshold
-
-    !! Optional Parameters
-    IF (.NOT. PRESENT(threshold_in)) THEN
-       threshold = 0.0_NTREAL
-    ELSE
-       threshold = threshold_in
-    END IF
-    IF (.NOT. PRESENT(pool_in)) THEN
-       pool = MatrixMemoryPool_p(A)
-    END IF
-
-    !! Check if P is the identity matrix, if so we can exit early.
-    IF (IsIdentity(P)) THEN
-       CALL CopyMatrix(A, ResMat)
-    ELSE
-       !! Compute
-       IF (PRESENT(pool_in)) THEN
-          CALL MatrixMultiply(P, A, TempMat, &
-               & threshold_in=threshold, memory_pool_in=pool_in)
-          CALL MatrixMultiply(TempMat, PInv, ResMat, &
-               & threshold_in=threshold, memory_pool_in=pool_in)
-       ELSE
-          CALL MatrixMultiply(P, A, TempMat, &
-               & threshold_in=threshold, memory_pool_in=pool)
-          CALL MatrixMultiply(TempMat, PInv, ResMat, &
-               & threshold_in=threshold, memory_pool_in=pool)
-       END IF
-    END IF
-
-    !! Cleanup
-    IF (.NOT. PRESENT(pool_in)) THEN
-       CALL DestructMatrixMemoryPool(pool)
-    END IF
-    CALL DestructMatrix(TempMat)
-  END SUBROUTINE SimilarityTransform
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 END MODULE PSMatrixAlgebraModule

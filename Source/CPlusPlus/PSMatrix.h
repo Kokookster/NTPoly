@@ -114,8 +114,6 @@ public:
   //! \param end_column the last column to include in this matrix.
   void GetMatrixSlice(Matrix_ps &submatrix, int start_row, int end_row,
                       int start_column, int end_column);
-  //! Determine if this is the identity matrix.
-  bool IsIdentity() const;
 
 public:
   //! Transpose a sparse matrix.

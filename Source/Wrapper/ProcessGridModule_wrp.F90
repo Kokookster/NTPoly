@@ -22,7 +22,6 @@ MODULE ProcessGridModule_wrp
   PUBLIC :: GetGlobalNumSlices_wrp
   PUBLIC :: GetGlobalNumColumns_wrp
   PUBLIC :: GetGlobalNumRows_wrp
-  PUBLIC :: WriteGlobalProcessGridInfo_wrp
   PUBLIC :: DestructGlobalProcessGrid_wrp
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   PUBLIC :: ConstructProcessGrid_wrp
@@ -35,7 +34,6 @@ MODULE ProcessGridModule_wrp
   PUBLIC :: GetNumSlices_wrp
   PUBLIC :: GetNumColumns_wrp
   PUBLIC :: GetNumRows_wrp
-  PUBLIC :: WriteProcessGridInfo_wrp
   PUBLIC :: DestructProcessGrid_wrp
 CONTAINS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   !> Wrap the process grid construction routine.
@@ -122,12 +120,6 @@ CONTAINS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     INTEGER(kind=c_int) :: return_val
     return_val = global_grid%num_process_rows
   END FUNCTION GetGlobalNumRows_wrp
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  !> Write out some basic information about the global grid to the log.
-  SUBROUTINE WriteGlobalProcessGridInfo_wrp() &
-       & BIND(c,name="WriteGlobalProcessGridInfo_wrp")
-    CALL WriteProcessGridInfo()
-  END SUBROUTINE WriteGlobalProcessGridInfo_wrp
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   !> Wrap the process grid construction routine.
   SUBROUTINE DestructGlobalProcessGrid_wrp() &
@@ -257,16 +249,6 @@ CONTAINS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     h_this = TRANSFER(ih_this,h_this)
     return_val = h_this%DATA%num_process_rows
   END FUNCTION GetNumRows_wrp
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  !> Write out some basic information about this process grid to the log.
-  SUBROUTINE WriteProcessGridInfo_wrp(ih_this) &
-       & BIND(c,name="WriteProcessGridInfo_wrp")
-    INTEGER(kind=c_int), INTENT(IN) :: ih_this(SIZE_wrp)
-    TYPE(ProcessGrid_wrp) :: h_this
-
-    h_this = TRANSFER(ih_this,h_this)
-    CALL WriteProcessGridInfo(h_this%DATA)
-  END SUBROUTINE WriteProcessGridInfo_wrp
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   !> Destruct a distributed sparse matrix
   SUBROUTINE DestructProcessGrid_wrp(ih_this) &

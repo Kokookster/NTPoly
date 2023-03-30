@@ -50,8 +50,6 @@ public:
   int GetNumColumns();
   //! Get the number of rows in this grid.
   int GetNumRows();
-  //! Write out some basic information about this process grid to the log.
-  void WriteInfo();
 
 public:
   //! Standard destructor
@@ -109,8 +107,6 @@ int GetGlobalNumSlices();
 int GetGlobalNumColumns();
 //! Get the number of process rows.
 int GetGlobalNumRows();
-//! Write out some basic information about the global process grid to the log.
-void WriteGridInfo();
 //! Standard destructor
 void DestructGlobalProcessGrid();
 } // namespace NTPoly

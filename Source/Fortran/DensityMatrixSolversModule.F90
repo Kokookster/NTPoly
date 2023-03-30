@@ -9,7 +9,7 @@ MODULE DensityMatrixSolversModule
   USE PMatrixMemoryPoolModule, ONLY : MatrixMemoryPool_p, &
        & DestructMatrixMemoryPool
   USE PSMatrixAlgebraModule, ONLY : IncrementMatrix, MatrixMultiply, &
-       & DotMatrix, MatrixTrace, ScaleMatrix, SimilarityTransform
+       & DotMatrix, MatrixTrace, ScaleMatrix
   USE PSMatrixModule, ONLY : Matrix_ps, ConstructEmptyMatrix, DestructMatrix, &
        & CopyMatrix, PrintMatrixInformation, FillMatrixIdentity, &
        & TransposeMatrix
@@ -28,14 +28,14 @@ MODULE DensityMatrixSolversModule
 CONTAINS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   !> Compute the density matrix from a Hamiltonian using the PM method.
   !> Based on the PM algorithm presented in \cite palser1998canonical
-  SUBROUTINE PM(Hamiltonian, InverseSquareRoot, trace, Density, &
+  SUBROUTINE PM(Hamiltonian, InverseSquareRoot, nel, Density, &
        & energy_value_out, chemical_potential_out, solver_parameters_in)
     !> The matrix to compute the corresponding density from.
     TYPE(Matrix_ps), INTENT(IN) :: Hamiltonian
     !> The inverse square root of the overlap matrix.
     TYPE(Matrix_ps), INTENT(IN) :: InverseSquareRoot
-    !> The trace of the density matrix (usually the number of electrons)
-    REAL(NTREAL), INTENT(IN) :: trace
+    !> The number of electrons.
+    INTEGER, INTENT(IN) :: nel
     !> The density matrix computed by this routine.
     TYPE(Matrix_ps), INTENT(INOUT) :: Density
     !> The energy of the system (optional).
@@ -100,9 +100,10 @@ CONTAINS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     !! Compute the working hamiltonian.
     CALL TransposeMatrix(InverseSquareRoot, InverseSquareRoot_T)
-    CALL SimilarityTransform(Hamiltonian, InverseSquareRoot, &
-         & InverseSquareRoot_T, WorkingHamiltonian, pool, &
-         & threshold_in=solver_parameters%threshold)
+    CALL MatrixMultiply(InverseSquareRoot, Hamiltonian, TempMat, &
+         & threshold_in=solver_parameters%threshold, memory_pool_in=pool)
+    CALL MatrixMultiply(TempMat, InverseSquareRoot_T, WorkingHamiltonian, &
+         & threshold_in=solver_parameters%threshold, memory_pool_in=pool)
 
     !! Load Balancing Step
     IF (solver_parameters%do_load_balancing) THEN
@@ -123,15 +124,15 @@ CONTAINS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     lambda = trace_value/X_k%actual_matrix_dimension
 
     !! Compute alpha
-    alpha1 = trace/(e_max-lambda)
-    alpha2 = (X_k%actual_matrix_dimension-trace)/(lambda-e_min)
+    alpha1 = nel*0.5_NTREAL/(e_max-lambda)
+    alpha2 = (X_k%actual_matrix_dimension-nel*0.5_NTREAL)/(lambda-e_min)
     alpha = MIN(alpha1,alpha2)
 
     factor = -alpha/X_k%actual_matrix_dimension
 
     CALL ScaleMatrix(X_k,factor)
 
-    factor = (alpha*lambda+trace)/X_k%actual_matrix_dimension
+    factor = (alpha*lambda+nel*0.5_NTREAL)/X_k%actual_matrix_dimension
 
     CALL IncrementMatrix(Identity,X_k,alpha_in=factor)
 
@@ -226,8 +227,10 @@ CONTAINS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     END IF
 
     !! Compute the density matrix in the non-orthogonalized basis
-    CALL SimilarityTransform(X_k, InverseSquareRoot_T, InverseSquareRoot, &
-         & Density, pool, threshold_in=solver_parameters%threshold)
+    CALL MatrixMultiply(InverseSquareRoot_T, X_k, TempMat, &
+         & threshold_in=solver_parameters%threshold, memory_pool_in=pool)
+    CALL MatrixMultiply(TempMat, InverseSquareRoot, Density, &
+         & threshold_in=solver_parameters%threshold, memory_pool_in=pool)
 
     !! Cleanup
     CALL DestructMatrix(WorkingHamiltonian)
@@ -275,7 +278,7 @@ CONTAINS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        END DO midpoints
        !! Undo scaling.
        chemical_potential_out = lambda - &
-            & (Hamiltonian%actual_matrix_dimension*midpoint - trace) &
+            & (Hamiltonian%actual_matrix_dimension*midpoint - nel*0.5_NTREAL) &
             & /alpha
     END IF
 
@@ -290,14 +293,14 @@ CONTAINS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   !> Compute the density matrix from a Hamiltonian using the TRS2 method.
   !> Based on the TRS2 algorithm presented in \cite niklasson2002.
-  SUBROUTINE TRS2(Hamiltonian, InverseSquareRoot, trace, Density, &
+  SUBROUTINE TRS2(Hamiltonian, InverseSquareRoot, nel, Density, &
        & energy_value_out, chemical_potential_out, solver_parameters_in)
     !> The matrix to compute the corresponding density from
     TYPE(Matrix_ps), INTENT(IN) :: Hamiltonian
     !> The inverse square root of the overlap matrix.
     TYPE(Matrix_ps), INTENT(IN) :: InverseSquareRoot
-    !> The trace of the density matrix (usually the number of electrons)
-    REAL(NTREAL), INTENT(IN) :: trace
+    !> The number of electrons.
+    INTEGER, INTENT(IN) :: nel
     !> The density matrix computed by this routine.
     TYPE(Matrix_ps), INTENT(INOUT) :: Density
     !> The energy of the system (optional).
@@ -357,9 +360,10 @@ CONTAINS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     !! Compute the working hamiltonian.
     CALL TransposeMatrix(InverseSquareRoot, InverseSquareRoot_T)
-    CALL SimilarityTransform(Hamiltonian, InverseSquareRoot, &
-         & InverseSquareRoot_T, WorkingHamiltonian, pool, &
-         & threshold_in=solver_parameters%threshold)
+    CALL MatrixMultiply(InverseSquareRoot, Hamiltonian, TempMat, &
+         & threshold_in=solver_parameters%threshold, memory_pool_in=pool)
+    CALL MatrixMultiply(TempMat, InverseSquareRoot_T, WorkingHamiltonian, &
+         & threshold_in=solver_parameters%threshold, memory_pool_in=pool)
 
     !! Load Balancing Step
     IF (solver_parameters%do_load_balancing) THEN
@@ -389,7 +393,7 @@ CONTAINS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     DO outer_counter = 1,solver_parameters%max_iterations
        !! Compute Sigma
        CALL MatrixTrace(X_k, trace_value)
-       IF (trace - trace_value .LT. 0.0_NTREAL) THEN
+       IF (nel*0.5_NTREAL - trace_value .LT. 0.0_NTREAL) THEN
           sigma_array(outer_counter) = -1.0_NTREAL
        ELSE
           sigma_array(outer_counter) = 1.0_NTREAL
@@ -445,8 +449,10 @@ CONTAINS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     END IF
 
     !! Compute the density matrix in the non-orthogonalized basis
-    CALL SimilarityTransform(X_k, InverseSquareRoot_T, InverseSquareRoot, &
-         & Density, pool, threshold_in=solver_parameters%threshold)
+    CALL MatrixMultiply(InverseSquareRoot_T, X_k, TempMat, &
+         & threshold_in=solver_parameters%threshold, memory_pool_in=pool)
+    CALL MatrixMultiply(TempMat, InverseSquareRoot, Density, &
+         & threshold_in=solver_parameters%threshold, memory_pool_in=pool)
 
     !! Cleanup
     CALL DestructMatrix(WorkingHamiltonian)
@@ -500,14 +506,14 @@ CONTAINS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   !> Compute the density matrix from a Hamiltonian using the TRS4 method.
   !> Based on the TRS4 algorithm presented in \cite niklasson2002
-  SUBROUTINE TRS4(Hamiltonian, InverseSquareRoot, trace, Density, &
+  SUBROUTINE TRS4(Hamiltonian, InverseSquareRoot, nel, Density, &
        & energy_value_out, chemical_potential_out, solver_parameters_in)
     !> The matrix to compute the corresponding density from.
     TYPE(Matrix_ps), INTENT(IN)  :: Hamiltonian
     !> The inverse square root of the overlap matrix.
     TYPE(Matrix_ps), INTENT(IN) :: InverseSquareRoot
-    !> The trace of the density matrix (usually the number of electrons)
-    REAL(NTREAL), INTENT(IN) :: trace
+    !> The number of electrons.
+    INTEGER, INTENT(IN) :: nel
     !> The density matrix computed by this routine.
     TYPE(Matrix_ps), INTENT(INOUT) :: Density
     !> The energy of the system (optional).
@@ -572,9 +578,10 @@ CONTAINS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     !! Compute the working hamiltonian.
     CALL TransposeMatrix(InverseSquareRoot, InverseSquareRoot_T)
-    CALL SimilarityTransform(Hamiltonian, InverseSquareRoot, &
-         & InverseSquareRoot_T, WorkingHamiltonian, pool, &
-         & threshold_in=solver_parameters%threshold)
+    CALL MatrixMultiply(InverseSquareRoot, Hamiltonian, TempMat, &
+         & threshold_in=solver_parameters%threshold, memory_pool_in=pool)
+    CALL MatrixMultiply(TempMat, InverseSquareRoot_T, WorkingHamiltonian, &
+         & threshold_in=solver_parameters%threshold, memory_pool_in=pool)
 
     !! Load Balancing Step
     IF (solver_parameters%do_load_balancing) THEN
@@ -624,7 +631,7 @@ CONTAINS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        END IF
 
        !! Compute Sigma
-       sigma_array(outer_counter) = (trace - trace_fx)/trace_gx
+       sigma_array(outer_counter) = (nel*0.5_NTREAL-trace_fx)/trace_gx
 
        !! Update The Matrix
        IF (sigma_array(outer_counter) .GT. sigma_max) THEN
@@ -678,8 +685,10 @@ CONTAINS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     END IF
 
     !! Compute the density matrix in the non-orthogonalized basis
-    CALL SimilarityTransform(X_k, InverseSquareRoot_T, InverseSquareRoot, &
-         & Density, pool, threshold_in=solver_parameters%threshold)
+    CALL MatrixMultiply(InverseSquareRoot_T, X_k, TempMat, &
+         & threshold_in=solver_parameters%threshold, memory_pool_in=pool)
+    CALL MatrixMultiply(TempMat, InverseSquareRoot, Density, &
+         & threshold_in=solver_parameters%threshold, memory_pool_in=pool)
 
     !! Cleanup
     CALL DestructMatrix(WorkingHamiltonian)
@@ -742,14 +751,14 @@ CONTAINS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   !> Compute the density matrix from a Hamiltonian using the HPCP method.
   !> Based on the algorithm presented in \cite truflandier2016communication.
-  SUBROUTINE HPCP(Hamiltonian, InverseSquareRoot, trace, Density, &
+  SUBROUTINE HPCP(Hamiltonian, InverseSquareRoot, nel, Density, &
        & energy_value_out, chemical_potential_out, solver_parameters_in)
     !> The matrix to compute the corresponding density from.
     TYPE(Matrix_ps), INTENT(IN) :: Hamiltonian
     !> The inverse square root of the overlap matrix.
     TYPE(Matrix_ps), INTENT(IN) :: InverseSquareRoot
-    !> The trace of the density matrix (usually the number of electrons)
-    REAL(NTREAL), INTENT(IN) :: trace
+    !> The number of electrons.
+    INTEGER, INTENT(IN) :: nel
     !> The density matrix computed by this routine.
     TYPE(Matrix_ps), INTENT(INOUT) :: Density
     !> The energy of the system (optional).
@@ -819,9 +828,10 @@ CONTAINS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     !! Compute the working hamiltonian.
     CALL TransposeMatrix(InverseSquareRoot, InverseSquareRoot_T)
-    CALL SimilarityTransform(Hamiltonian, InverseSquareRoot, &
-         & InverseSquareRoot_T, WorkingHamiltonian, pool, &
-         & threshold_in=solver_parameters%threshold)
+    CALL MatrixMultiply(InverseSquareRoot, Hamiltonian, TempMat, &
+         & threshold_in=solver_parameters%threshold, memory_pool_in=pool)
+    CALL MatrixMultiply(TempMat, InverseSquareRoot_T, WorkingHamiltonian, &
+         & threshold_in=solver_parameters%threshold, memory_pool_in=pool)
 
     !! Load Balancing Step
     IF (solver_parameters%do_load_balancing) THEN
@@ -835,7 +845,7 @@ CONTAINS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     CALL GershgorinBounds(WorkingHamiltonian,e_min,e_max)
     CALL MatrixTrace(WorkingHamiltonian, mu)
     mu = mu/matrix_dimension
-    sigma_bar = (matrix_dimension - trace)/matrix_dimension
+    sigma_bar = (matrix_dimension - 0.5_NTREAL*nel)/matrix_dimension
     sigma = 1.0_NTREAL - sigma_bar
     beta = sigma/(e_max - mu)
     beta_bar = sigma_bar/(mu - e_min)
@@ -927,8 +937,11 @@ CONTAINS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     END IF
 
     !! Compute the density matrix in the non-orthogonalized basis
-    CALL SimilarityTransform(D1, InverseSquareRoot_T, InverseSquareRoot, &
-         & Density, pool, threshold_in=solver_parameters%threshold)
+    CALL MatrixMultiply(InverseSquareRoot_T, D1, TempMat, &
+         & threshold_in=solver_parameters%threshold, memory_pool_in=pool)
+    CALL MatrixMultiply(TempMat, InverseSquareRoot, Density, &
+         & threshold_in=solver_parameters%threshold, memory_pool_in=pool)
+
     !! Cleanup
     CALL DestructMatrix(WorkingHamiltonian)
     CALL DestructMatrix(InverseSquareRoot_T)
@@ -983,14 +996,14 @@ CONTAINS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   !> Note that for this method, you must provide the value of the homo and
   !> lumo gap. It is not necessary for these to be accurate, but give a
   !> conservative value.
-  SUBROUTINE ScaleAndFold(Hamiltonian, InverseSquareRoot, trace, Density, &
+  SUBROUTINE ScaleAndFold(Hamiltonian, InverseSquareRoot, nel, Density, &
        & homo, lumo, energy_value_out, solver_parameters_in)
     !> The matrix to compute the corresponding density from
     TYPE(Matrix_ps), INTENT(IN) :: Hamiltonian
     !> The inverse square root of the overlap matrix.
     TYPE(Matrix_ps), INTENT(IN) :: InverseSquareRoot
-    !> The trace of the density matrix (usually the number of electrons)
-    REAL(NTREAL), INTENT(IN) :: trace
+    !> The number of electrons.
+    INTEGER, INTENT(IN) :: nel
     !> The density matrix computed by this routine.
     TYPE(Matrix_ps), INTENT(INOUT) :: Density
     !> The energy of the system (optional).
@@ -1048,9 +1061,10 @@ CONTAINS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     !! Compute the working hamiltonian.
     CALL TransposeMatrix(InverseSquareRoot, InverseSquareRoot_T)
-    CALL SimilarityTransform(Hamiltonian, InverseSquareRoot, &
-         & InverseSquareRoot_T, WorkingHamiltonian, pool, &
-         & threshold_in=solver_parameters%threshold)
+    CALL MatrixMultiply(InverseSquareRoot, Hamiltonian, TempMat, &
+         & threshold_in=solver_parameters%threshold, memory_pool_in=pool)
+    CALL MatrixMultiply(TempMat, InverseSquareRoot_T, WorkingHamiltonian, &
+         & threshold_in=solver_parameters%threshold, memory_pool_in=pool)
 
     !! Load Balancing Step
     IF (solver_parameters%do_load_balancing) THEN
@@ -1082,7 +1096,7 @@ CONTAINS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     DO outer_counter = 1,solver_parameters%max_iterations
        !! Determine the path
        CALL MatrixTrace(X_k, trace_value)
-       IF (trace_value .GT. trace) THEN
+       IF (trace_value .GT. 0.5*nel) THEN
           alpha = 2.0/(2.0 - Beta)
           CALL ScaleMatrix(X_k, alpha)
           CALL IncrementMatrix(Identity, X_k, alpha_in=(1.0_NTREAL-alpha))
@@ -1138,8 +1152,10 @@ CONTAINS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     END IF
 
     !! Compute the density matrix in the non-orthogonalized basis
-    CALL SimilarityTransform(X_k, InverseSquareRoot_T, InverseSquareRoot, &
-         & Density, pool, threshold_in=solver_parameters%threshold)
+    CALL MatrixMultiply(InverseSquareRoot_T, X_k, TempMat, &
+         & threshold_in=solver_parameters%threshold, memory_pool_in=pool)
+    CALL MatrixMultiply(TempMat, InverseSquareRoot, Density, &
+         & threshold_in=solver_parameters%threshold, memory_pool_in=pool)
 
     !! Cleanup
     CALL DestructMatrix(WorkingHamiltonian)
@@ -1171,6 +1187,8 @@ CONTAINS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     REAL(NTREAL), INTENT(IN), OPTIONAL :: threshold_in
     !! Handling Optional Parameters
     REAL(NTREAL) :: threshold
+    !! Local Matrices
+    TYPE(Matrix_ps) :: TempMat
     !! Temporary Variables
     TYPE(MatrixMemoryPool_p) :: pool
 
@@ -1181,11 +1199,18 @@ CONTAINS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        threshold = 0.0_NTREAL
     END IF
 
+    !! Construct All The Necessary Matrices
+    CALL ConstructEmptyMatrix(EnergyDensity, Hamiltonian)
+    CALL ConstructEmptyMatrix(TempMat, Hamiltonian)
+
     !! EDM = DM * H * DM
-    CALL SimilarityTransform(Hamiltonian, Density, &
-         & Density, EnergyDensity, pool, threshold_in=threshold)
+    CALL MatrixMultiply(Density, Hamiltonian, TempMat, &
+         & threshold_in=threshold, memory_pool_in=pool)
+    CALL MatrixMultiply(TempMat, Density, EnergyDensity, &
+         & threshold_in=threshold, memory_pool_in=pool)
 
     !! Cleanup
+    CALL DestructMatrix(TempMat)
     CALL DestructMatrixMemoryPool(pool)
   END SUBROUTINE EnergyDensityMatrix
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

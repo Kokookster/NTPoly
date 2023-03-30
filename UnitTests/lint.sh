@@ -15,13 +15,11 @@ clang-format -style=llvm Source/CPlusPlus/*.cc -i
 clang-format -style=llvm Examples/*/*.cc -i
 
 # Fortran
-for dir in Source Examples; do
-  for f in $(find ${dir} -type f -name "*.*90"); do
-    emacs -batch $f --eval="(f90-mode)" \
-                    --eval="(f90-upcase-keywords)" -f save-buffer 2>/dev/null
-    emacs -batch $f --eval="(f90-mode)" \
-                    --eval="(f90-indent-subprogram)" -f save-buffer 2>/dev/null
-  done
+for f in $(find . -type f -name "*.*90"); do
+  emacs -batch $f --eval="(f90-mode)" \
+                  --eval="(f90-upcase-keywords)" -f save-buffer 2>/dev/null
+  emacs -batch $f --eval="(f90-mode)" \
+                  --eval="(f90-indent-subprogram)" -f save-buffer 2>/dev/null
 done
 
 # 80 Column Limit
